@@ -4,7 +4,6 @@ import { DashboardHeader } from '../components/DashboardHeader';
 import { ExpenseForm } from '../components/ExpenseForm';
 import { ExpenseList } from '../components/ExpenseList';
 import { SpendingChart } from '../components/SpendingChart';
-import { BadgeDisplay } from '../components/BadgeDisplay';
 import { ParentView } from '../components/ParentView';
 
 const Index = () => {
@@ -45,20 +44,15 @@ const Index = () => {
       <DashboardHeader onSwitchToParent={() => setCurrentView('parent')} />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Expense Form and Badges */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Expense Form */}
           <div className="space-y-6">
             <ExpenseForm onAddExpense={addExpense} />
-            <BadgeDisplay expenses={expenses} />
           </div>
 
-          {/* Middle Column - Chart */}
-          <div className="lg:col-span-1">
+          {/* Right Column - Chart and Expense List */}
+          <div className="space-y-6">
             <SpendingChart expenses={expenses} />
-          </div>
-
-          {/* Right Column - Expense List */}
-          <div className="lg:col-span-1">
             <ExpenseList expenses={expenses} />
           </div>
         </div>
