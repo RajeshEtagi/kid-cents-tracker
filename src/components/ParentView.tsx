@@ -1,9 +1,10 @@
-
-import React from 'react';
-import { ArrowLeft, Mail, TrendingUp, Calendar, DollarSign, Target } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Mail, TrendingUp, Calendar, DollarSign, Target, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { sendWeeklyReport } from '../services/emailService';
+import { useToast } from '../hooks/use-toast';
 
 interface ParentViewProps {
   expenses: any[];
@@ -11,9 +12,17 @@ interface ParentViewProps {
 }
 
 export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const weeklyLimit = 100; // Example weekly limit
   const remainingBudget = weeklyLimit - totalSpent;
+
+  const categoryBreakdown = expenses.reduce((acc, expense) => {
+    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+    return acc;
+  }, {});
 
   const weeklyData = [
     { day: 'Mon', amount: 15 },
@@ -24,6 +33,37 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
     { day: 'Sat', amount: 0 },
     { day: 'Sun', amount: 5 }
   ];
+
+  const handleSendWeeklyReport = async () => {
+    setIsLoading(true);
+    try {
+      const reportData = {
+        childName: 'Alex',
+        totalSpent,
+        weeklyLimit,
+        expenses,
+        categoryBreakdown,
+      };
+
+      // In a real app, you'd get the parent email from user settings
+      const parentEmail = 'parent@example.com';
+      
+      await sendWeeklyReport(parentEmail, reportData);
+      
+      toast({
+        title: "Weekly Report Sent!",
+        description: `Report has been sent to ${parentEmail}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send weekly report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -45,9 +85,17 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
               </div>
             </div>
 
-            <Button className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700">
-              <Mail className="h-4 w-4" />
-              <span>Send Weekly Report</span>
+            <Button 
+              onClick={handleSendWeeklyReport}
+              disabled={isLoading}
+              className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700"
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Mail className="h-4 w-4" />
+              )}
+              <span>{isLoading ? 'Sending...' : 'Send Weekly Report'}</span>
             </Button>
           </div>
         </div>
