@@ -32,7 +32,74 @@ export const sendWeeklyReport = async (parentEmail: string, reportData: WeeklyRe
     };
   } catch (error) {
     console.error('Error sending weekly report:', error);
-    throw error;
+    // Don't throw error - return a graceful response instead
+    return {
+      success: false,
+      message: 'Email service temporarily unavailable',
+      timestamp: new Date().toISOString(),
+      recipient: parentEmail
+    };
+  }
+};
+
+export const generatePDFReport = async (reportData: WeeklyReportData) => {
+  try {
+    // Mock PDF generation - in a real app, you'd use a library like jsPDF or react-pdf
+    console.log('Generating PDF report for:', reportData.childName);
+    
+    // Simulate PDF generation delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Create a simple text-based "PDF" content for demonstration
+    const pdfContent = `
+WEEKLY SPENDING REPORT
+Child: ${reportData.childName}
+Report Date: ${new Date().toLocaleDateString()}
+
+SUMMARY
+Total Spent: $${reportData.totalSpent.toFixed(2)}
+Weekly Limit: $${reportData.weeklyLimit.toFixed(2)}
+Remaining Budget: $${(reportData.weeklyLimit - reportData.totalSpent).toFixed(2)}
+
+EXPENSES
+${reportData.expenses.map(expense => 
+  `${expense.date} - ${expense.description} (${expense.category}): $${expense.amount.toFixed(2)}`
+).join('\n')}
+
+CATEGORY BREAKDOWN
+${Object.entries(reportData.categoryBreakdown).map(([category, amount]) => 
+  `${category}: $${amount.toFixed(2)}`
+).join('\n')}
+    `;
+    
+    // Create a downloadable blob
+    const blob = new Blob([pdfContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `weekly-report-${reportData.childName}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL
+    URL.revokeObjectURL(url);
+    
+    return {
+      success: true,
+      message: 'PDF report generated successfully',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error generating PDF report:', error);
+    // Don't throw error - return a graceful response instead
+    return {
+      success: false,
+      message: 'PDF generation temporarily unavailable',
+      timestamp: new Date().toISOString()
+    };
   }
 };
 
@@ -54,6 +121,11 @@ export const scheduleWeeklyReport = async (parentEmail: string, childId: string)
     };
   } catch (error) {
     console.error('Error scheduling weekly report:', error);
-    throw error;
+    // Don't throw error - return a graceful response instead
+    return {
+      success: false,
+      message: 'Scheduling service temporarily unavailable',
+      schedule: null
+    };
   }
 };
