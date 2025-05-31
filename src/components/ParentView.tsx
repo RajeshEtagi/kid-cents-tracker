@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { ArrowLeft, TrendingUp, Calendar, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
@@ -71,32 +72,55 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
   };
 
   const handleSendWhatsAppReport = () => {
-    const message = `📊 *WEEKLY SPENDING REPORT*
+    const isWithinBudget = totalSpent <= weeklyLimit;
+    const budgetEmoji = isWithinBudget ? '✅' : '⚠️';
+    const encouragementMessage = isWithinBudget 
+      ? "Great job staying within budget! 🎉" 
+      : "Getting close to the limit, but doing well! 💪";
 
-💰 *Summary:*
-• Total Spent: $${totalSpent.toFixed(2)}
-• Weekly Limit: $${weeklyLimit.toFixed(2)}
-• Remaining: $${(weeklyLimit - totalSpent).toFixed(2)}
+    const message = `🌟 *YOUR CHILD'S WEEKLY SPENDING REPORT* 🌟
 
-📝 *Recent Expenses:*
+Hi there! 👋 Hope you're having a wonderful day! 
+
+💰 *SPENDING SUMMARY*
+• Total Spent: $${totalSpent.toFixed(2)} ${budgetEmoji}
+• Weekly Budget: $${weeklyLimit.toFixed(2)}
+• Remaining: $${(weeklyLimit - totalSpent).toFixed(2)} 💵
+
+${encouragementMessage}
+
+🛍️ *RECENT PURCHASES*
 ${expenses.slice(0, 5).map(expense => 
-  `• ${expense.description}: $${expense.amount.toFixed(2)}`
+  `• ${expense.description}: $${expense.amount.toFixed(2)} 🏷️`
 ).join('\n')}
 
-📈 *Category Breakdown:*
-${Object.entries(categoryBreakdown).map(([category, amount]) => 
-  `• ${category}: $${(amount as number).toFixed(2)}`
-).join('\n')}
+📊 *SPENDING BY CATEGORY*
+${Object.entries(categoryBreakdown).map(([category, amount]) => {
+  const categoryEmojis = {
+    food: '🍕',
+    games: '🎮', 
+    books: '📚',
+    toys: '🧸',
+    clothes: '👕',
+    other: '💝'
+  };
+  const emoji = categoryEmojis[category as keyof typeof categoryEmojis] || '💝';
+  return `${emoji} ${category}: $${(amount as number).toFixed(2)}`;
+}).join('\n')}
 
-Report generated on ${new Date().toLocaleDateString()}`;
+📅 Report generated on ${new Date().toLocaleDateString()}
+
+Keep up the great work teaching financial responsibility! 🌈✨
+
+Have a fantastic day! 😊💕`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
 
     toast({
-      title: "WhatsApp Opened!",
-      description: "WhatsApp has been opened with the pre-filled report message.",
+      title: "WhatsApp Opened! 📱",
+      description: "WhatsApp has been opened with the enhanced report message.",
     });
   };
 
