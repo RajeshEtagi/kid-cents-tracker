@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, TrendingUp, Calendar, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
@@ -20,7 +21,7 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const weeklyLimit = 100;
 
-  const categoryBreakdown = expenses.reduce((acc, expense) => {
+  const categoryBreakdown = expenses.reduce((acc: Record<string, number>, expense) => {
     acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
     return acc;
   }, {});
@@ -84,7 +85,7 @@ ${expenses.slice(0, 5).map(expense =>
 
 📈 *Category Breakdown:*
 ${Object.entries(categoryBreakdown).map(([category, amount]) => 
-  `• ${category}: $${amount.toFixed(2)}`
+  `• ${category}: $${(amount as number).toFixed(2)}`
 ).join('\n')}
 
 Report generated on ${new Date().toLocaleDateString()}`;
