@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, TrendingUp, Calendar, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { generatePDFReport, sendWhatsAppReport } from '../services/emailService';
+import { generatePDFReport } from '../services/emailService';
 import { useToast } from '../hooks/use-toast';
 
 interface ParentViewProps {
@@ -16,8 +15,6 @@ interface ParentViewProps {
 
 export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('');
   const { toast } = useToast();
   
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -72,47 +69,34 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
     }
   };
 
-  const handleSendWhatsAppReport = async () => {
-    if (!whatsappNumber.trim()) {
-      toast({
-        title: "WhatsApp Number Required",
-        description: "Please enter a valid WhatsApp number.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSendWhatsAppReport = () => {
+    const message = `📊 *WEEKLY SPENDING REPORT*
 
-    setIsSendingWhatsApp(true);
-    try {
-      const reportData = {
-        childName: 'Child',
-        totalSpent,
-        weeklyLimit,
-        expenses,
-        categoryBreakdown,
-      };
+💰 *Summary:*
+• Total Spent: $${totalSpent.toFixed(2)}
+• Weekly Limit: $${weeklyLimit.toFixed(2)}
+• Remaining: $${(weeklyLimit - totalSpent).toFixed(2)}
 
-      const result = await sendWhatsAppReport(whatsappNumber, reportData);
-      
-      if (result.success) {
-        toast({
-          title: "WhatsApp Report Sent!",
-          description: `Report has been sent to ${whatsappNumber}`,
-        });
-      } else {
-        toast({
-          title: "WhatsApp Report",
-          description: result.message,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "WhatsApp Report",
-        description: "WhatsApp service is currently unavailable.",
-      });
-    } finally {
-      setIsSendingWhatsApp(false);
-    }
+📝 *Recent Expenses:*
+${expenses.slice(0, 5).map(expense => 
+  `• ${expense.description}: $${expense.amount.toFixed(2)}`
+).join('\n')}
+
+📈 *Category Breakdown:*
+${Object.entries(categoryBreakdown).map(([category, amount]) => 
+  `• ${category}: $${amount.toFixed(2)}`
+).join('\n')}
+
+Report generated on ${new Date().toLocaleDateString()}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+
+    toast({
+      title: "WhatsApp Opened!",
+      description: "WhatsApp has been opened with the pre-filled report message.",
+    });
   };
 
   return (
@@ -136,48 +120,27 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="whatsapp-number" className="text-sm font-medium">
-                  WhatsApp Number
-                </Label>
-                <Input
-                  id="whatsapp-number"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  className="w-64"
-                />
-              </div>
-              
-              <div className="flex flex-col space-y-2">
-                <Button 
-                  onClick={handleSendWhatsAppReport}
-                  disabled={isSendingWhatsApp}
-                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
-                >
-                  {isSendingWhatsApp ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <MessageCircle className="h-4 w-4" />
-                  )}
-                  <span>{isSendingWhatsApp ? 'Sending...' : 'Send WhatsApp Report'}</span>
-                </Button>
+              <Button 
+                onClick={handleSendWhatsAppReport}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Send WhatsApp Report</span>
+              </Button>
 
-                <Button 
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF}
-                  variant="outline"
-                  className="flex items-center space-x-2"
-                >
-                  {isGeneratingPDF ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                  ) : (
-                    <FileText className="h-4 w-4" />
-                  )}
-                  <span>{isGeneratingPDF ? 'Generating...' : 'Download PDF'}</span>
-                </Button>
-              </div>
+              <Button 
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                {isGeneratingPDF ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                <span>{isGeneratingPDF ? 'Generating...' : 'Download PDF'}</span>
+              </Button>
             </div>
           </div>
         </div>
