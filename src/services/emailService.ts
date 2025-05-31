@@ -14,38 +14,10 @@ interface WeeklyReportData {
   categoryBreakdown: Record<string, number>;
 }
 
-export const sendWeeklyReport = async (parentEmail: string, reportData: WeeklyReportData) => {
-  try {
-    // Mock implementation - simulate sending email report
-    console.log('Sending weekly report to:', parentEmail);
-    console.log('Report data:', reportData);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simulate successful response
-    return {
-      success: true,
-      message: 'Weekly report sent successfully',
-      timestamp: new Date().toISOString(),
-      recipient: parentEmail
-    };
-  } catch (error) {
-    console.error('Error sending weekly report:', error);
-    // Don't throw error - return a graceful response instead
-    return {
-      success: false,
-      message: 'Email service temporarily unavailable',
-      timestamp: new Date().toISOString(),
-      recipient: parentEmail
-    };
-  }
-};
-
 export const generatePDFReport = async (reportData: WeeklyReportData) => {
   try {
     // Mock PDF generation - in a real app, you'd use a library like jsPDF or react-pdf
-    console.log('Generating PDF report for:', reportData.childName);
+    console.log('Generating PDF report');
     
     // Simulate PDF generation delay
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -53,7 +25,6 @@ export const generatePDFReport = async (reportData: WeeklyReportData) => {
     // Create a simple text-based "PDF" content for demonstration
     const pdfContent = `
 WEEKLY SPENDING REPORT
-Child: ${reportData.childName}
 Report Date: ${new Date().toLocaleDateString()}
 
 SUMMARY
@@ -79,7 +50,7 @@ ${Object.entries(reportData.categoryBreakdown).map(([category, amount]) =>
     // Create a temporary download link
     const link = document.createElement('a');
     link.href = url;
-    link.download = `weekly-report-${reportData.childName}-${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = `weekly-report-${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -94,7 +65,6 @@ ${Object.entries(reportData.categoryBreakdown).map(([category, amount]) =>
     };
   } catch (error) {
     console.error('Error generating PDF report:', error);
-    // Don't throw error - return a graceful response instead
     return {
       success: false,
       message: 'PDF generation temporarily unavailable',
@@ -103,29 +73,51 @@ ${Object.entries(reportData.categoryBreakdown).map(([category, amount]) =>
   }
 };
 
-export const scheduleWeeklyReport = async (parentEmail: string, childId: string) => {
+export const sendWhatsAppReport = async (phoneNumber: string, reportData: WeeklyReportData) => {
   try {
-    // Mock implementation for scheduling
-    console.log('Scheduling weekly report for:', parentEmail, 'child:', childId);
+    // Mock WhatsApp implementation - simulate sending report
+    console.log('Sending WhatsApp report to:', phoneNumber);
+    console.log('Report data:', reportData);
     
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // Create WhatsApp message content
+    const message = `📊 *WEEKLY SPENDING REPORT*
+
+💰 *Summary:*
+• Total Spent: $${reportData.totalSpent.toFixed(2)}
+• Weekly Limit: $${reportData.weeklyLimit.toFixed(2)}
+• Remaining: $${(reportData.weeklyLimit - reportData.totalSpent).toFixed(2)}
+
+📝 *Recent Expenses:*
+${reportData.expenses.slice(0, 5).map(expense => 
+  `• ${expense.description}: $${expense.amount.toFixed(2)}`
+).join('\n')}
+
+📈 *Category Breakdown:*
+${Object.entries(reportData.categoryBreakdown).map(([category, amount]) => 
+  `• ${category}: $${amount.toFixed(2)}`
+).join('\n')}
+
+Report generated on ${new Date().toLocaleDateString()}`;
+
+    console.log('WhatsApp message:', message);
+    
+    // Simulate successful response
     return {
       success: true,
-      message: 'Weekly report scheduled successfully',
-      schedule: {
-        frequency: 'weekly',
-        dayOfWeek: 'sunday',
-        time: '09:00'
-      }
+      message: 'WhatsApp report sent successfully',
+      timestamp: new Date().toISOString(),
+      recipient: phoneNumber
     };
   } catch (error) {
-    console.error('Error scheduling weekly report:', error);
-    // Don't throw error - return a graceful response instead
+    console.error('Error sending WhatsApp report:', error);
     return {
       success: false,
-      message: 'Scheduling service temporarily unavailable',
-      schedule: null
+      message: 'WhatsApp service temporarily unavailable',
+      timestamp: new Date().toISOString(),
+      recipient: phoneNumber
     };
   }
 };

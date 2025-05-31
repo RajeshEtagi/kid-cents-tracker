@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, TrendingUp, Calendar, DollarSign, FileText } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Calendar, DollarSign, FileText, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { sendWeeklyReport, generatePDFReport } from '../services/emailService';
+import { generatePDFReport, sendWhatsAppReport } from '../services/emailService';
 import { useToast } from '../hooks/use-toast';
 
 interface ParentViewProps {
@@ -15,14 +15,13 @@ interface ParentViewProps {
 }
 
 export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [parentEmail, setParentEmail] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const { toast } = useToast();
   
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const weeklyLimit = 100; // Example weekly limit
-  const remainingBudget = weeklyLimit - totalSpent;
+  const weeklyLimit = 100;
 
   const categoryBreakdown = expenses.reduce((acc, expense) => {
     acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
@@ -39,61 +38,30 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
     { day: 'Sun', amount: 5 }
   ];
 
-  const handleSendWeeklyReport = async () => {
-    if (!parentEmail.trim()) {
-      toast({
-        title: "Email Required",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const reportData = {
-        childName: 'Alex',
-        totalSpent,
-        weeklyLimit,
-        expenses,
-        categoryBreakdown,
-      };
-
-      await sendWeeklyReport(parentEmail, reportData);
-      
-      toast({
-        title: "Weekly Report Sent!",
-        description: `Report has been sent to ${parentEmail}`,
-      });
-    } catch (error) {
-      // Don't throw error, just show user-friendly message
-      console.log('Email service not available, but continuing...');
-      toast({
-        title: "Report Prepared",
-        description: "Weekly report has been prepared. Email service is currently unavailable.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
       const reportData = {
-        childName: 'Alex',
+        childName: 'Child',
         totalSpent,
         weeklyLimit,
         expenses,
         categoryBreakdown,
       };
 
-      await generatePDFReport(reportData);
+      const result = await generatePDFReport(reportData);
       
-      toast({
-        title: "PDF Downloaded!",
-        description: "Weekly report has been downloaded as PDF.",
-      });
+      if (result.success) {
+        toast({
+          title: "PDF Downloaded!",
+          description: "Weekly report has been downloaded as PDF.",
+        });
+      } else {
+        toast({
+          title: "PDF Generation",
+          description: result.message,
+        });
+      }
     } catch (error) {
       toast({
         title: "PDF Generation",
@@ -101,6 +69,49 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
       });
     } finally {
       setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleSendWhatsAppReport = async () => {
+    if (!whatsappNumber.trim()) {
+      toast({
+        title: "WhatsApp Number Required",
+        description: "Please enter a valid WhatsApp number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingWhatsApp(true);
+    try {
+      const reportData = {
+        childName: 'Child',
+        totalSpent,
+        weeklyLimit,
+        expenses,
+        categoryBreakdown,
+      };
+
+      const result = await sendWhatsAppReport(whatsappNumber, reportData);
+      
+      if (result.success) {
+        toast({
+          title: "WhatsApp Report Sent!",
+          description: `Report has been sent to ${whatsappNumber}`,
+        });
+      } else {
+        toast({
+          title: "WhatsApp Report",
+          description: result.message,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "WhatsApp Report",
+        description: "WhatsApp service is currently unavailable.",
+      });
+    } finally {
+      setIsSendingWhatsApp(false);
     }
   };
 
@@ -119,38 +130,38 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
                 <span>Back to Kid View</span>
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-indigo-700">Parent Dashboard</h1>
-                <p className="text-gray-600">Alex's spending overview</p>
+                <h1 className="text-3xl font-bold text-indigo-700">Dashboard</h1>
+                <p className="text-gray-600">Spending overview</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
               <div className="flex flex-col space-y-2">
-                <Label htmlFor="parent-email" className="text-sm font-medium">
-                  Parent Email
+                <Label htmlFor="whatsapp-number" className="text-sm font-medium">
+                  WhatsApp Number
                 </Label>
                 <Input
-                  id="parent-email"
-                  type="email"
-                  placeholder="parent@example.com"
-                  value={parentEmail}
-                  onChange={(e) => setParentEmail(e.target.value)}
+                  id="whatsapp-number"
+                  type="tel"
+                  placeholder="+1234567890"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
                   className="w-64"
                 />
               </div>
               
               <div className="flex flex-col space-y-2">
                 <Button 
-                  onClick={handleSendWeeklyReport}
-                  disabled={isLoading}
-                  className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700"
+                  onClick={handleSendWhatsAppReport}
+                  disabled={isSendingWhatsApp}
+                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
                 >
-                  {isLoading ? (
+                  {isSendingWhatsApp ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   ) : (
-                    <Mail className="h-4 w-4" />
+                    <MessageCircle className="h-4 w-4" />
                   )}
-                  <span>{isLoading ? 'Sending...' : 'Send Email Report'}</span>
+                  <span>{isSendingWhatsApp ? 'Sending...' : 'Send WhatsApp Report'}</span>
                 </Button>
 
                 <Button 
@@ -173,7 +184,7 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Stats Cards */}
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardHeader className="pb-2">
@@ -182,16 +193,6 @@ export const ParentView: React.FC<ParentViewProps> = ({ expenses, onBackToKid })
             <CardContent>
               <div className="text-3xl font-bold text-green-800">${totalSpent.toFixed(2)}</div>
               <p className="text-green-600 text-sm">This week</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">Remaining Budget</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-800">${remainingBudget.toFixed(2)}</div>
-              <p className="text-blue-600 text-sm">Out of ${weeklyLimit}</p>
             </CardContent>
           </Card>
 
